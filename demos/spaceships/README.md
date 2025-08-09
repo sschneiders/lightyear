@@ -35,9 +35,9 @@ your client will rollback to position the bullet correctly.
 
 ## Running the example
 
-- Run the server with a gui: `cargo run server`
-- Run client with id 1: `cargo run client -c 1`
-- Run client with id 2: `cargo run client -c 2`
+- Run the server with a gui: `cargo run -- server`
+- Run client with id 1: `cargo run -- client -c 1`
+- Run client with id 2: `cargo run -- client -c 2`
 - Run the client and server in two separate bevy Apps: `cargo run` or `cargo run separate`
 - Run the server without a gui: `cargo run --no-default-features --features=server`
 - Run the client and server in "HostClient" mode, where the server is also a client (there is only one App): `cargo run host-client`

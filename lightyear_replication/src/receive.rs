@@ -926,6 +926,7 @@ impl GroupChannel {
                 entity: local_entity_mut,
                 buffered: &mut BufferedChanges::default(),
             };
+
             for component in components {
                 let _ = component_registry
                     .buffer(

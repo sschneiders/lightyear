@@ -278,3 +278,7 @@ impl ToBytes for SenderMetadata {
         Ok(Self { send_interval })
     }
 }
+
+
+#[derive(Event, Debug)]
+pub struct OnChangeReplicated;

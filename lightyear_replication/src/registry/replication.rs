@@ -2,9 +2,11 @@ use crate::prelude::ComponentReplicationConfig;
 use crate::registry::buffered::BufferedEntity;
 use crate::registry::registry::ComponentRegistry;
 use crate::registry::{ComponentError, ComponentKind, ComponentNetId};
+use crate::message::OnChangeReplicated;
 #[cfg(feature = "metrics")]
 use alloc::format;
 use bevy_ecs::component::{Component, ComponentId, Immutable, Mutable};
+use bevy_ecs::prelude::{Commands, Event};
 use bytes::Bytes;
 use lightyear_core::prelude::Tick;
 use lightyear_serde::ToBytes;
@@ -69,7 +71,7 @@ impl ReplicationMetadata {
             unsafe { core::mem::transmute::<unsafe fn(), BufferFn<C>>(self.inner_buffer) };
         // SAFETY: the erased_deserialize is guaranteed to be valid for the type C
         let deserialize = unsafe { erased_serialize_fns.deserialize_fns::<_, C, C>() };
-        buffer_fn(deserialize, reader, tick, entity_mut, entity_map)
+        buffer_fn(deserialize, reader, tick, entity_mut, entity_map, self.config.trigger_on_change)
     }
 }
 
@@ -109,7 +111,7 @@ impl ComponentRegistry {
             .serialization
             .as_ref()
             .ok_or(ComponentError::MissingSerializationFns)?;
-        (replication_metadata.buffer)(
+        let _ = (replication_metadata.buffer)(
             replication_metadata,
             erased_serialize_fns,
             &mut reader,
@@ -187,6 +189,7 @@ pub type BufferFn<C> = fn(
     tick: Tick,
     entity_mut: &mut BufferedEntity,
     entity_map: &mut ReceiveEntityMap,
+    trigger_on_change_replicated_event: bool,
 ) -> Result<(), ComponentError>;
 
 pub trait GetWriteFns<C: Component> {
@@ -208,6 +211,7 @@ fn default_buffer<C: Component<Mutability = Mutable> + PartialEq>(
     _tick: Tick,
     entity_mut: &mut BufferedEntity,
     entity_map: &mut ReceiveEntityMap,
+    trigger_on_change_replicated_event: bool,
 ) -> Result<(), ComponentError> {
     let kind = ComponentKind::of::<C>();
     let component_id = entity_mut.component_id::<C>();
@@ -249,6 +253,9 @@ fn default_buffer<C: Component<Mutability = Mutable> + PartialEq>(
             .increment(1);
         }
     }
+    if trigger_on_change_replicated_event{
+        entity_mut.entity.trigger(OnChangeReplicated{});
+    }
     Ok(())
 }
 
@@ -265,6 +272,7 @@ fn default_immutable_buffer<C: Component<Mutability = Immutable> + PartialEq>(
     _tick: Tick,
     entity_mut: &mut BufferedEntity,
     entity_map: &mut ReceiveEntityMap,
+    trigger_on_change_replicated_event: bool,
 ) -> Result<(), ComponentError> {
     let kind = ComponentKind::of::<C>();
     let component_id = entity_mut.component_id::<C>();
@@ -288,6 +296,10 @@ fn default_immutable_buffer<C: Component<Mutability = Immutable> + PartialEq>(
             entity_mut.buffered.insert::<C>(component, component_id);
         }
     }
+    if trigger_on_change_replicated_event{
+        entity_mut.entity.trigger(OnChangeReplicated{});
+    }
+
     Ok(())
 }
 

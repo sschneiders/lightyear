@@ -4,6 +4,7 @@ use crate::registry::buffered::BufferedEntity;
 use crate::registry::registry::ComponentRegistry;
 use crate::registry::replication::ReplicationMetadata;
 use crate::registry::{ComponentError, ComponentKind};
+use crate::message::OnChangeReplicated;
 use alloc::boxed::Box;
 use alloc::format;
 use bevy_ecs::{
@@ -173,6 +174,7 @@ fn buffer_insert_delta<C: Component<Mutability = Mutable> + PartialEq + Diffable
     tick: Tick,
     entity_mut: &mut BufferedEntity,
     entity_map: &mut ReceiveEntityMap,
+    trigger_on_change_replicated_event: bool
 ) -> Result<(), ComponentError> {
     let kind = ComponentKind::of::<C>();
     let component_id = entity_mut.component_id::<C>();
@@ -246,6 +248,9 @@ fn buffer_insert_delta<C: Component<Mutability = Mutable> + PartialEq + Diffable
                 entity_mut.entity.insert(history);
             }
         }
+    }
+    if trigger_on_change_replicated_event {
+        entity_mut.entity.trigger(OnChangeReplicated {});
     }
     Ok(())
 }

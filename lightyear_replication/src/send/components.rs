@@ -41,6 +41,8 @@ pub struct ComponentReplicationConfig {
     pub disable: bool,
     /// If true, the component will be replicated using delta compression
     pub delta_compression: bool,
+    ///If true emits trigger OnChanged when component changes
+    pub trigger_on_change: bool,
 }
 
 #[derive(Debug, Default, Reflect)]
