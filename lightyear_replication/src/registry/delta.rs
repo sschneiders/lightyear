@@ -249,8 +249,8 @@ fn buffer_insert_delta<C: Component<Mutability = Mutable> + PartialEq + Diffable
             }
         }
     }
-    if trigger_on_change_replicated_event {
-        entity_mut.entity.trigger(OnChangeReplicated {});
+    if trigger_on_change_replicated_event{
+        unsafe{entity_mut.entity.world_mut().trigger_targets(OnChangeReplicated{}, entity);}
     }
     Ok(())
 }

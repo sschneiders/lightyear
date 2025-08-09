@@ -254,7 +254,7 @@ fn default_buffer<C: Component<Mutability = Mutable> + PartialEq>(
         }
     }
     if trigger_on_change_replicated_event{
-        entity_mut.entity.trigger(OnChangeReplicated{});
+        unsafe{entity_mut.entity.world_mut().trigger_targets(OnChangeReplicated{}, entity);}
     }
     Ok(())
 }
@@ -297,7 +297,7 @@ fn default_immutable_buffer<C: Component<Mutability = Immutable> + PartialEq>(
         }
     }
     if trigger_on_change_replicated_event{
-        entity_mut.entity.trigger(OnChangeReplicated{});
+        unsafe{entity_mut.entity.world_mut().trigger_targets(OnChangeReplicated{}, entity);}
     }
 
     Ok(())
