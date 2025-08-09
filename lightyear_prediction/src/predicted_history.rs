@@ -21,6 +21,7 @@ use bevy_ecs::{
 };
 use core::fmt::Debug;
 use core::ops::Deref;
+use bevy_ecs::prelude::ParamSet;
 use bevy_ecs::system::SystemParam;
 use lightyear_core::history_buffer::HistoryBuffer;
 use lightyear_core::prelude::{LocalTimeline, NetworkTimeline};
@@ -134,41 +135,32 @@ pub(crate) fn apply_immutable_confirmed_update<C: Component + Clone>(
         }
     }
 }
-#[derive(SystemParam)]
-pub struct ComponentIdWorldAccess<'w> {
-    pub world: &'w World,
-}
-
-impl<'w> ComponentIdWorldAccess<'w> {
-    /// Safely gets the `ComponentId` for a given component type.
-    pub fn component_id<C: Component>(&self) -> Option<ComponentId> {
-        self.world.component_id::<C>()
-    }
-}
 
 /// If PredictionMode == Simple, when we receive a server update we want to apply it to the predicted entity
 #[allow(clippy::type_complexity)]
 pub(crate) fn apply_confirmed_update<C: SyncComponent>(
-    component_id_world_access: ComponentIdWorldAccess,
-    //mut commands: Commands,
+    mut commands: Commands,
     prediction_registry: Res<PredictionRegistry>,
     component_registry: Res<ComponentRegistry>,
     manager: Single<&PredictionManager>,
-    mut predicted_entities: Query<
+    mut world_predicted_entities: ParamSet<(&World, Query<
         &mut C,
         (
             Without<PredictionHistory<C>>,
             Without<Confirmed>,
             With<Predicted>,
         ),
-    >,
+    >)>,
     confirmed_entities: Query<(&Confirmed, Ref<C>)>,
 ) {
     for (confirmed_entity, confirmed_component) in confirmed_entities.iter() {
+        let Some(component_id) = world_predicted_entities.p0().component_id::<C>() else{
+            continue;
+        };
         if let Some(p) = confirmed_entity.predicted
             && confirmed_component.is_changed()
             && !confirmed_component.is_added()
-            && let Ok(mut predicted_component) = predicted_entities.get_mut(p)
+            && let Ok(mut predicted_component) = world_predicted_entities.p1().get_mut(p)
         {
             assert_eq!(
                 prediction_registry.prediction_mode::<C>(),
@@ -182,9 +174,7 @@ pub(crate) fn apply_confirmed_update<C: SyncComponent>(
             let Some(predicted_entity) = confirmed_entity.predicted else{
                 continue;
             };
-            let Some(component_id) = component_id_world_access.component_id::<C>() else{
-                continue;
-            };
+
             let Some(component_kind) = component_registry.as_ref().component_id_to_kind.get(&component_id) else{
                 continue;
             };
@@ -195,9 +185,8 @@ pub(crate) fn apply_confirmed_update<C: SyncComponent>(
                 continue;
             };
             if replication_meta_data.config.trigger_on_change_replicated {
-                //unsafe{commands.entity(predicted_entity).trigger(OnChangeReplicated{});}
+                unsafe{commands.entity(predicted_entity).trigger(OnChangeReplicated{});}
             }
-
         }
     }
 }
