@@ -204,7 +204,7 @@ pub(crate) fn add_prediction_systems<C: SyncComponent>(
                 PreUpdate,
                 (
                     // for SyncMode::Simple, just copy the confirmed components
-                    apply_confirmed_update::<C>.in_set(PredictionSet::Sync),
+                    apply_confirmed_update::<C>//.in_set(PredictionSet::Sync),
                 ),
             );
         }

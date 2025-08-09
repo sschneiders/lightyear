@@ -71,7 +71,7 @@ impl ReplicationMetadata {
             unsafe { core::mem::transmute::<unsafe fn(), BufferFn<C>>(self.inner_buffer) };
         // SAFETY: the erased_deserialize is guaranteed to be valid for the type C
         let deserialize = unsafe { erased_serialize_fns.deserialize_fns::<_, C, C>() };
-        buffer_fn(deserialize, reader, tick, entity_mut, entity_map, self.config.trigger_on_change)
+        buffer_fn(deserialize, reader, tick, entity_mut, entity_map, self.config.trigger_on_change_replicated)
     }
 }
 

@@ -21,6 +21,7 @@ use bevy_ecs::{
 };
 use core::fmt::Debug;
 use core::ops::Deref;
+use bevy_ecs::system::SystemParam;
 use lightyear_core::history_buffer::HistoryBuffer;
 use lightyear_core::prelude::{LocalTimeline, NetworkTimeline};
 use lightyear_core::timeline::SyncEvent;
@@ -29,6 +30,7 @@ use lightyear_replication::prelude::{Confirmed, ReplicationSet};
 use lightyear_replication::registry::registry::ComponentRegistry;
 use lightyear_sync::prelude::InputTimeline;
 use tracing::trace;
+use lightyear_replication::message::OnChangeReplicated;
 
 pub type PredictionHistory<C> = HistoryBuffer<C>;
 
@@ -136,6 +138,8 @@ pub(crate) fn apply_immutable_confirmed_update<C: Component + Clone>(
 /// If PredictionMode == Simple, when we receive a server update we want to apply it to the predicted entity
 #[allow(clippy::type_complexity)]
 pub(crate) fn apply_confirmed_update<C: SyncComponent>(
+    world: &World,
+    mut commands: Commands,
     prediction_registry: Res<PredictionRegistry>,
     component_registry: Res<ComponentRegistry>,
     manager: Single<&PredictionManager>,
@@ -163,6 +167,25 @@ pub(crate) fn apply_confirmed_update<C: SyncComponent>(
             let mut component = confirmed_component.deref().clone();
             let _ = manager.map_entities(&mut component, component_registry.as_ref());
             *predicted_component = component;
+
+            let Some(predicted_entity) = confirmed_entity.predicted else{
+                return;
+            };
+            let Some(component_id) = world.component_id::<C>() else{
+                return;
+            };
+            let Some(component_kind) = component_registry.as_ref().component_id_to_kind.get(&component_id) else{
+                return;
+            };
+            let Some(component_meta_data) = component_registry.as_ref().component_metadata_map.get(component_kind) else{
+                return;
+            };
+            let Some(replication_meta_data) = &component_meta_data.replication else{
+                return;
+            };
+            if replication_meta_data.config.trigger_on_change_replicated {
+                unsafe{commands.entity(predicted_entity).trigger(OnChangeReplicated{});}
+            }
         }
     }
 }

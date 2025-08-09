@@ -41,8 +41,9 @@ pub struct ComponentReplicationConfig {
     pub disable: bool,
     /// If true, the component will be replicated using delta compression
     pub delta_compression: bool,
-    ///If true emits trigger OnChanged when component changes
-    pub trigger_on_change: bool,
+    ///If true emits trigger OnChangeReplicated when component changes
+    ///NOTE: is currently only triggered on Predicted entities with prediction mode [PredictionMode::Simple]
+    pub trigger_on_change_replicated: bool,
 }
 
 #[derive(Debug, Default, Reflect)]

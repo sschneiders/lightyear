@@ -133,7 +133,7 @@ pub struct ComponentRegistry {
 #[derive(Debug, Clone)]
 pub struct ComponentMetadata {
     pub component_id: ComponentId,
-    pub(crate) replication: Option<ReplicationMetadata>,
+    pub replication: Option<ReplicationMetadata>,
     pub serialization: Option<ErasedSerializeFns>,
     pub(crate) delta: Option<ErasedDeltaFns>,
     #[cfg(feature = "deterministic")]
