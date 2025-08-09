@@ -138,7 +138,7 @@ pub(crate) fn apply_immutable_confirmed_update<C: Component + Clone>(
 /// If PredictionMode == Simple, when we receive a server update we want to apply it to the predicted entity
 #[allow(clippy::type_complexity)]
 pub(crate) fn apply_confirmed_update<C: SyncComponent>(
-    world: &World,
+    //world: &World,
     //mut commands: Commands,
     prediction_registry: Res<PredictionRegistry>,
     component_registry: Res<ComponentRegistry>,
@@ -171,7 +171,7 @@ pub(crate) fn apply_confirmed_update<C: SyncComponent>(
             let Some(predicted_entity) = confirmed_entity.predicted else{
                 continue;
             };
-            let Some(component_id) = world.component_id::<C>() else{
+            /*let Some(component_id) = world.component_id::<C>() else{
                 continue;
             };
             let Some(component_kind) = component_registry.as_ref().component_id_to_kind.get(&component_id) else{
@@ -186,6 +186,7 @@ pub(crate) fn apply_confirmed_update<C: SyncComponent>(
             if replication_meta_data.config.trigger_on_change_replicated {
                 //unsafe{commands.entity(predicted_entity).trigger(OnChangeReplicated{});}
             }
+             */
         }
     }
 }
